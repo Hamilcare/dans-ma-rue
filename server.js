@@ -10,6 +10,8 @@ const client = new Client({ node: config.get('elasticsearch.uri') });
 const { count, countAround } = require('./services/count');
 const { statsByArrondissement, statsByType, statsByMonth, statsPropreteByArrondissement } = require('./services/stats');
 
+const dateFormat = 'YYYY-MM-DD'
+
 app.get('/', function (req, res) {
     res.send('DansMaRue Stats API');
 });
@@ -17,14 +19,15 @@ app.get('/', function (req, res) {
 app.get('/_count', function (req, res) {
     const from = req.query.from;
     const to = req.query.to;
-    console.log(`Count request receveid from ${from} to ${to}`)
-    if (from !== undefined && !moment(from, 'YYYY-MM-DD', true).isValid()) {
+    console.log(`Count request receveid from ${from} (included) to ${to} (excluded)`)
+    if (from !== undefined && !moment(from, dateFormat, true).isValid()) {
         res.status(400).send('Unvalid query parameter: from');
     } else {
-        if (to !== undefined && !moment(to, 'YYYY-MM-DD', true).isValid()) {
+        if (to !== undefined && !moment(to, dateFormat, true).isValid()) {
             res.status(400).send('Unvalid query parameter: to');
         } else {
-            count(client, from, to, (data) => {
+            let toExcluded = moment(to).subtract(1, 'days').format(dateFormat)
+            count(client, from, toExcluded, (data) => {
                 res.json(data);
             });
         }

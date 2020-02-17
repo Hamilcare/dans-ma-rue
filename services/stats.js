@@ -3,7 +3,32 @@ const indexName = config.get('elasticsearch.index_name');
 
 exports.statsByArrondissement = (client, callback) => {
     // TODO Compter le nombre d'anomalies par arondissement
-    callback([]);
+    client.search({
+        index: indexName,
+        body: {
+            size: 0,
+            aggs: {
+                "anoParArrondissement": {
+                    terms: {
+                        field: "arrondissement.keyword",
+                        size: 20
+                    }
+                }
+            }
+        }
+    }).then(result => {
+
+        callback([
+            result.body.aggregations.anoParArrondissement.buckets
+            .map(
+                row => ({
+                    arrondissement: row.key,
+                    count: row.doc_count
+                })
+            )
+        ]);
+    })
+
 }
 
 exports.statsByType = (client, callback) => {

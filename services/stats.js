@@ -60,7 +60,7 @@ exports.statsByType = (client, callback) => {
             typeBucket => ({
                 type: typeBucket.key,
                 count: typeBucket.doc_count,
-                sous_types : typeBucket.sous_type.buckets.map(sousTypeBucket => ({
+                sous_types: typeBucket.sous_type.buckets.map(sousTypeBucket => ({
                     sous_type: sousTypeBucket.key,
                     count: sousTypeBucket.doc_count
                 }))
@@ -74,10 +74,50 @@ exports.statsByType = (client, callback) => {
 
 exports.statsByMonth = (client, callback) => {
     // TODO Trouver le top 10 des mois avec le plus d'anomalies
-    callback([]);
+    client.search({
+        index: indexName,
+        body: {
+            size: 0,
+            aggs: {
+                "top_mois": {
+                    terms: {
+                        field: "date_declaration.keyword",
+                        size: 10
+                    }
+                }
+            }
+        }
+    }).then(result => {
+        callback([result.body.aggregations.top_mois.buckets.map(row => ({
+            month: row.key,
+            count: row.doc_count
+        }))])
+    })
 }
-
 exports.statsPropreteByArrondissement = (client, callback) => {
     // TODO Trouver le top 3 des arrondissements avec le plus d'anomalies concernant la propreté
-    callback([]);
+    client.search({
+        index: indexName,
+        body: {
+            size: 0,
+            query: {
+                match: {
+                    type: "Propreté"
+                }
+            },
+            aggs: {
+                "arrondissement": {
+                    terms: {
+                        field: "arrondissement.keyword",
+                        size: 3
+                    }
+                }
+            }
+        }
+    }).then(result => {
+        callback([result.body.aggregations.arrondissement.buckets.map(row => ({
+            arrondissement: row.key,
+            count: row.doc_count
+        }))])
+    })
 }

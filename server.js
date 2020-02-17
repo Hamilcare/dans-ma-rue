@@ -17,6 +17,7 @@ app.get('/', function (req, res) {
 app.get('/_count', function (req, res) {
     const from = req.query.from;
     const to = req.query.to;
+    console.log(`Count request receveid from ${from} to ${to}`)
     if (from !== undefined && !moment(from, 'YYYY-MM-DD', true).isValid()) {
         res.status(400).send('Unvalid query parameter: from');
     } else {
